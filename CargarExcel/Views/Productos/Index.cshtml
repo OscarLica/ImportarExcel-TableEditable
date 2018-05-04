@@ -1,0 +1,202 @@
+﻿@model IEnumerable<CargarExcel.Models.Productos>
+
+
+<div class="container">
+    <div class="row">
+        @if (ViewBag.mensaje != null)
+        {
+            if (ViewBag.mensaje)
+            {
+                <div class="col-md-12">
+                    <div class="alert alert-success">Datos Cargados Exitosamente</div>
+                </div>
+            }
+            else
+            {
+                <div class="col-md-12">
+                    <div class="alert alert-danger">Error Cargando los Datos</div>
+                </div>
+            }
+        }
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">Cargar Archivo</div>
+                <div class="panel-body">
+                    @using (Html.BeginForm("loadData", "Productos", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                    {
+                        <input type="file" name="file" />
+                        <button type="submit" class="btn btn-primary">Cargar</button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">Listado <button type="button" class="btn btn-default" onclick="UpdateAll()">Actualizar Todos</button></div>
+                <div class="panel-body  table-editable">
+                    <table class="table table-condensed table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th style="display:none">
+                                    @Html.DisplayNameFor(model => model.id)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.nombre)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.descripcion)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.precioCompra)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.precioVenta)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.iva)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.fecha)
+                                </th>
+                                <th>
+                                    @Html.DisplayNameFor(model => model.estado)
+                                </th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="data">
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td style="display:none">
+                                        @Html.DisplayFor(modelItem => item.id)
+                                    </td>
+                                    <td contenteditable="true">
+                                        @Html.DisplayFor(modelItem => item.nombre)
+                                    </td>
+                                    <td contenteditable="true">
+                                        @Html.DisplayFor(modelItem => item.descripcion)
+                                    </td>
+                                    <td contenteditable="true">
+                                        @Html.DisplayFor(modelItem => item.precioCompra)
+                                    </td>
+                                    <td contenteditable="true">
+                                        @Html.DisplayFor(modelItem => item.precioVenta)
+                                    </td>
+                                    <td contenteditable="true">
+                                        @Html.DisplayFor(modelItem => item.iva)
+                                    </td>
+                                    <td contenteditable="true">
+                                        @Html.DisplayFor(modelItem => item.fecha)
+                                    </td>
+                                    <td >
+                                        <input type="checkbox" checked="@item.estado" />
+
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-success" onclick="update(this)">Actualizar</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td style="display:none"></td>
+                                <td></td>
+                                <td></td>
+                                <td>@Model.Sum(x => x.precioCompra)</td>
+                                <td>@Model.Sum(x => x.precioVenta)</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.3/sweetalert2.all.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.19.3/sweetalert2.min.css" />
+<script type="text/javascript">
+    function update(elemento)
+    {
+        var td = elemento.parentElement;
+        var tr = td.parentElement;
+        var p = {
+            id : tr.children[0].innerText,
+            nombre: tr.children[1].innerText,
+            descripcion: tr.children[2].innerText,
+            precioCompra: tr.children[3].innerText,
+            precioVenta: tr.children[4].innerText,
+            iva: tr.children[5].innerText,
+            fecha: tr.children[6].innerText,
+            estado: tr.children[7].children[0].checked,
+        };
+
+        $.ajax({
+            async: true,
+            cache: false,
+            url: '/Productos/Editar',
+            type: 'POST',
+            data: JSON.stringify(p),
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            success: function ()
+            {
+                mensaje("Update Exitoso");
+                window.location.href = "http://localhost:49452/Productos";
+            }
+        })
+    }
+
+    function UpdateAll()
+    {
+        var tbody = $("#data");
+        var filas = tbody[0].children;
+        var p = [];
+        $(filas).each(function (i, item) {
+            var d = {
+                id: item.children[0].innerText,
+                nombre: item.children[1].innerText,
+                descripcion: item.children[2].innerText,
+                precioCompra: item.children[3].innerText,
+                precioVenta: item.children[4].innerText,
+                iva: item.children[5].innerText,
+                fecha: item.children[6].innerText,
+                estado: item.children[7].children[0].checked
+            }
+            p.push(d);
+        });
+
+        $.ajax({
+            async: true,
+            cache: false,
+            url: '/Productos/UpdateAll',
+            type: 'POST',
+            data: JSON.stringify(p),
+            contentType: 'application/json; charset=utf-8',
+            dataType: 'json',
+            success: function () {
+                mensaje("Updte Masivo Exitoso");
+                window.location.href = "http://localhost:49452/Productos";
+            }
+        })
+    }
+    function mensaje(titulo)
+    {
+        swal({
+            posición: 'top-end',
+            tipo: 'èxito',
+            título: titulo,
+            showConfirmButton: false,
+            temporizador: 1500
+        })
+    }
+
+
+</script>
